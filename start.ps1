@@ -21,9 +21,22 @@ Write-Host "  ============================================" -ForegroundColor Mag
 Write-Host ""
 Write-Host "[1/5] 前置检查..." -ForegroundColor Cyan
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-    Write-Host "    未找到 node。请先安装 Node.js (https://nodejs.org/) 并加入 PATH。" -ForegroundColor Red
-    Read-Host "按回车键退出"
-    exit 1
+    # PATH 未含 node，探测常见安装路径并临时加入 PATH（不影响系统配置）
+    $nodeCandidates = @(
+        "$env:ProgramFiles\nodejs",
+        "$env:LOCALAPPDATA\Programs\nodejs",
+        "C:\Program Files\nodejs",
+        "C:\Program Files (x86)\nodejs"
+    )
+    $found = $false
+    foreach ($p in $nodeCandidates) {
+        if ($p -and (Test-Path "$p\node.exe")) { $env:Path += ";$p"; $found = $true; break }
+    }
+    if (-not $found) {
+        Write-Host "    未找到 node。请先安装 Node.js (https://nodejs.org/) 并加入 PATH。" -ForegroundColor Red
+        Read-Host "按回车键退出"
+        exit 1
+    }
 }
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     Write-Host "    未找到 npm。请检查 Node.js 安装。" -ForegroundColor Red
